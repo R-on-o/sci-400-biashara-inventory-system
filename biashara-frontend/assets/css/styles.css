@@ -1,0 +1,546 @@
+/* ==========================================================================
+   Biashara Inventory System — Design Tokens & Shared Styles
+   Stack: HTML5 / CSS3 / Bootstrap 5 (per Proposal §3.5)
+   ========================================================================== */
+
+:root {
+  /* Color tokens — navy & white, corporate/banking feel */
+  --biashara-teal-900: #0a1a35;   /* deepest navy — sidebar, headers */
+  --biashara-teal-700: #123a6b;   /* primary navy — buttons, links */
+  --biashara-teal-500: #1e56a0;   /* mid navy — accents, focus states */
+  --biashara-teal-100: #e9edf6;   /* pale navy tint — hover/active backgrounds */
+  --biashara-amber-500: #b8892e;  /* muted gold — Owner accent only, used sparingly */
+  --biashara-amber-600: #9c7226;
+  --biashara-bg: #f4f6f9;         /* cool near-white page background */
+  --biashara-surface: #ffffff;
+  --biashara-ink: #1a2130;
+  --biashara-ink-muted: #5c6478;
+  --biashara-border: #dde2eb;
+  --biashara-success: #1f8a4c;
+  --biashara-success-bg: #e9f7ef;
+  --biashara-danger: #c0392b;
+  --biashara-danger-bg: #fbebe9;
+  --biashara-warning: #9c7226;
+  --biashara-warning-bg: #f7f0e2;
+
+  /* Type scale */
+  --font-body: "Inter", -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+
+  /* Layout */
+  --sidebar-width: 240px;
+  --radius: 8px;
+  --shadow-sm: 0 1px 2px rgba(10, 26, 53, 0.08);
+  --shadow-md: 0 4px 16px rgba(10, 26, 53, 0.10);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--biashara-bg);
+  color: var(--biashara-ink);
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+h1, h2, h3, h4, h5, .fw-semibold, .fw-bold {
+  letter-spacing: -0.02em;
+}
+
+/* ---------- App shell: sidebar + main ---------- */
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  background: var(--biashara-teal-900);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 40;
+  transition: transform 0.2s ease;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.25rem 1.25rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-brand .mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--biashara-amber-500);
+  color: var(--biashara-teal-900);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.sidebar-brand .name {
+  font-weight: 700;
+  font-size: 1.02rem;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+}
+
+.sidebar-brand .tagline {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 0.75rem 0.6rem;
+}
+
+.sidebar-nav .nav-section-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.4);
+  padding: 0.9rem 0.75rem 0.35rem;
+}
+
+.sidebar-nav a {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.82);
+  text-decoration: none;
+  font-size: 0.9rem;
+  margin-bottom: 0.15rem;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.sidebar-nav a:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.sidebar-nav a.active {
+  background: var(--biashara-teal-500);
+  color: #fff;
+  font-weight: 600;
+}
+
+.sidebar-nav a .icon {
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.sidebar-footer {
+  padding: 0.9rem 1.1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.9rem 1.1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-user .avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--biashara-teal-500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.sidebar-user .avatar.avatar-owner {
+  background: var(--biashara-amber-500);
+  color: var(--biashara-teal-900);
+}
+
+.sidebar-user .avatar.avatar-attendant {
+  background: var(--biashara-teal-500);
+  color: #fff;
+}
+
+.sidebar-user .who { font-size: 0.82rem; line-height: 1.2; }
+.sidebar-user .who .role-pill {
+  display: inline-block;
+  margin-top: 0.2rem;
+  padding: 0.06rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.sidebar-user .who .role-pill.role-owner {
+  background: var(--biashara-amber-500);
+  color: var(--biashara-teal-900);
+}
+.sidebar-user .who .role-pill.role-attendant {
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Prominent role badge in the topbar — visible on every page regardless
+   of sidebar state, so it's obvious at a glance (and on a screen share)
+   which role is currently logged in. */
+.role-badge-topbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.role-badge-topbar.role-owner {
+  background: var(--biashara-amber-500);
+  color: var(--biashara-teal-900);
+  box-shadow: var(--shadow-sm);
+}
+.role-badge-topbar.role-attendant {
+  background: var(--biashara-teal-100);
+  color: var(--biashara-teal-700);
+  border: 1px solid var(--biashara-teal-500);
+}
+.role-badge-topbar .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.main {
+  margin-left: var(--sidebar-width);
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  background: var(--biashara-surface);
+  border-bottom: 1px solid var(--biashara-border);
+  padding: 0.85rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.topbar h1 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--biashara-teal-900);
+}
+
+.topbar .subtitle {
+  font-size: 0.8rem;
+  color: var(--biashara-ink-muted);
+  margin-top: 0.1rem;
+}
+
+.sidebar-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  color: var(--biashara-teal-900);
+}
+
+.content {
+  padding: 1.5rem;
+  flex: 1;
+}
+
+/* ---------- Cards & stat tiles ---------- */
+
+.stat-tile {
+  background: var(--biashara-surface);
+  border: 1px solid var(--biashara-border);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.25rem;
+  box-shadow: var(--shadow-sm);
+  height: 100%;
+}
+
+.stat-tile .label {
+  font-size: 0.78rem;
+  color: var(--biashara-ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.stat-tile .value {
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: var(--biashara-teal-900);
+  margin-top: 0.15rem;
+  font-family: var(--font-mono);
+}
+
+.stat-tile .delta {
+  font-size: 0.78rem;
+  margin-top: 0.35rem;
+}
+
+.stat-tile.alert .value { color: var(--biashara-danger); }
+.stat-tile .icon-badge {
+  width: 38px; height: 38px;
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--biashara-teal-100);
+  color: var(--biashara-teal-700);
+  font-size: 1.05rem;
+  float: right;
+}
+
+.panel {
+  background: var(--biashara-surface);
+  border: 1px solid var(--biashara-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.panel-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--biashara-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-header h2 {
+  font-size: 0.98rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--biashara-teal-900);
+}
+
+.panel-body { padding: 1.1rem 1.25rem; }
+
+/* ---------- Tables ---------- */
+
+.table-biashara {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.table-biashara th {
+  text-align: left;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--biashara-ink-muted);
+  font-weight: 600;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--biashara-border);
+  white-space: nowrap;
+}
+
+.table-biashara td {
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--biashara-border);
+  vertical-align: middle;
+}
+
+.table-biashara tbody tr:hover { background: var(--biashara-teal-100); }
+.table-biashara tbody tr:last-child td { border-bottom: none; }
+
+/* ---------- Badges / pills ---------- */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.pill-success { background: var(--biashara-success-bg); color: var(--biashara-success); }
+.pill-danger  { background: var(--biashara-danger-bg); color: var(--biashara-danger); }
+.pill-warning { background: var(--biashara-warning-bg); color: var(--biashara-warning); }
+.pill-muted   { background: var(--biashara-teal-100); color: var(--biashara-teal-700); }
+
+.pill-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: currentColor;
+}
+
+/* ---------- Buttons (Bootstrap overrides) ---------- */
+
+.btn-biashara {
+  background: var(--biashara-teal-700);
+  border-color: var(--biashara-teal-700);
+  color: #fff;
+}
+.btn-biashara:hover, .btn-biashara:focus {
+  background: var(--biashara-teal-900);
+  border-color: var(--biashara-teal-900);
+  color: #fff;
+}
+
+.btn-amber {
+  background: var(--biashara-amber-500);
+  border-color: var(--biashara-amber-500);
+  color: var(--biashara-teal-900);
+  font-weight: 600;
+}
+.btn-amber:hover, .btn-amber:focus {
+  background: var(--biashara-amber-600);
+  border-color: var(--biashara-amber-600);
+  color: var(--biashara-teal-900);
+}
+
+.btn-outline-biashara {
+  border: 1px solid var(--biashara-teal-700);
+  color: var(--biashara-teal-700);
+  background: transparent;
+}
+.btn-outline-biashara:hover {
+  background: var(--biashara-teal-100);
+  color: var(--biashara-teal-900);
+}
+
+a { color: var(--biashara-teal-700); }
+
+/* ---------- Forms ---------- */
+
+.form-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--biashara-ink);
+}
+
+.form-control, .form-select {
+  border-color: var(--biashara-border);
+  font-size: 0.9rem;
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--biashara-teal-500);
+  box-shadow: 0 0 0 3px rgba(23, 118, 125, 0.15);
+}
+
+/* ---------- Auth (login) page ---------- */
+
+.auth-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, var(--biashara-teal-900) 0%, var(--biashara-teal-700) 55%, var(--biashara-teal-500) 100%);
+  padding: 1.5rem;
+}
+
+.auth-card {
+  background: var(--biashara-surface);
+  border-radius: 14px;
+  box-shadow: var(--shadow-md);
+  max-width: 400px;
+  width: 100%;
+  padding: 2rem 1.9rem 1.75rem;
+}
+
+.auth-mark {
+  width: 46px; height: 46px;
+  border-radius: 12px;
+  background: var(--biashara-amber-500);
+  color: var(--biashara-teal-900);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+}
+
+.auth-card h1 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--biashara-teal-900);
+  margin-bottom: 0.15rem;
+}
+
+.auth-card .sub { color: var(--biashara-ink-muted); font-size: 0.88rem; margin-bottom: 1.5rem; }
+
+.demo-hint {
+  background: var(--biashara-teal-100);
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.78rem;
+  color: var(--biashara-teal-700);
+  margin-top: 1.1rem;
+}
+
+/* ---------- Low-stock alert row emphasis ---------- */
+
+.row-critical { background: var(--biashara-danger-bg) !important; }
+.row-low { background: var(--biashara-warning-bg) !important; }
+
+/* ---------- Empty states ---------- */
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--biashara-ink-muted);
+}
+.empty-state .icon {
+  font-size: 2rem;
+  color: var(--biashara-border);
+  margin-bottom: 0.5rem;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 900px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; }
+  .sidebar-toggle { display: inline-flex; align-items: center; }
+}
+
+/* ---------- Focus visibility (accessibility) ---------- */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--biashara-amber-500);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}

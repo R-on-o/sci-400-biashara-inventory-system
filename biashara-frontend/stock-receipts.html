@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stock Receipts &middot; Biashara Inventory System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+
+  <div class="app-shell" id="appShell"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script>
+    const content = Biashara.mountShell({
+      active: "stock-receipts",
+      title: "Stock Receipts",
+      subtitle: "Record new stock as it arrives from suppliers",
+    });
+
+    // mountShell() returns null and redirects to index.html if there's
+    // no valid session, so bail out of the rest of this page's script.
+    if (!content) {
+      // redirecting...
+    } else {
+
+    async function render() {
+      content.innerHTML = `<div class="text-center text-muted py-5">Loading...</div>`;
+
+      let products, receipts;
+      try {
+        [products, receipts] = await Promise.all([
+          BiasharaDB.getProducts(),
+          BiasharaDB.getStockReceipts(),
+        ]);
+      } catch (err) {
+        content.innerHTML = `<div class="empty-state"><div class="icon">&#9888;</div>Could not load stock receipts: ${Biashara.escapeHtml(err.message)}</div>`;
+        return;
+      }
+
+      content.innerHTML = `
+        <div class="row g-3">
+          <div class="col-lg-5">
+            <div class="panel">
+              <div class="panel-header"><h2>Receive New Stock</h2></div>
+              <div class="panel-body">
+                <form id="receiptForm">
+                  <div class="mb-3">
+                    <label class="form-label">Product</label>
+                    <select class="form-select" id="receiptProduct" required>
+                      <option value="" disabled selected>Select a product...</option>
+                      ${products.map(p => `<option value="${p.id}">${Biashara.escapeHtml(p.name)} (current: ${p.quantityInStock})</option>`).join("")}
+                    </select>
+                  </div>
+                  <div class="row">
+                    <div class="col-6 mb-3">
+                      <label class="form-label">Quantity received</label>
+                      <input type="number" min="1" step="1" class="form-control" id="receiptQty" required>
+                    </div>
+                    <div class="col-6 mb-3">
+                      <label class="form-label">Date received</label>
+                      <input type="date" class="form-control" id="receiptDate" required>
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Supplier name</label>
+                    <input type="text" class="form-control" id="receiptSupplier" placeholder="e.g. Mumias Sugar Distributors" required>
+                  </div>
+                  <button type="submit" class="btn btn-biashara w-100">Save receipt &amp; update stock</button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-7">
+            <div class="panel">
+              <div class="panel-header"><h2>Receipt History</h2></div>
+              <div class="panel-body p-0">
+                ${receipts.length === 0 ? `
+                  <div class="empty-state"><div class="icon">&#128666;</div>No stock receipts recorded yet.</div>` : `
+                  <table class="table-biashara">
+                    <thead><tr><th>Date</th><th>Product</th><th>Qty Received</th><th>Supplier</th></tr></thead>
+                    <tbody>
+                      ${receipts.map(r => `
+                        <tr>
+                          <td>${r.dateReceived}</td>
+                          <td>${r.product ? Biashara.escapeHtml(r.product.name) : "—"}</td>
+                          <td>+${r.quantityReceived}</td>
+                          <td>${Biashara.escapeHtml(r.supplierName)}</td>
+                        </tr>`).join("")}
+                    </tbody>
+                  </table>`}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("receiptDate").value = new Date().toISOString().slice(0, 10);
+
+      document.getElementById("receiptForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const submitBtn = e.target.querySelector("button[type=submit]");
+        const productId = document.getElementById("receiptProduct").value;
+        const quantityReceived = document.getElementById("receiptQty").value;
+        const dateReceived = document.getElementById("receiptDate").value;
+        const supplierName = document.getElementById("receiptSupplier").value.trim();
+
+        if (!productId) return;
+
+        submitBtn.disabled = true;
+        try {
+          await BiasharaDB.addStockReceipt({ productId, quantityReceived, dateReceived, supplierName });
+          Biashara.toast("Stock receipt saved — quantity updated.");
+          render();
+        } catch (err) {
+          Biashara.toast(err.message, "danger");
+          submitBtn.disabled = false;
+        }
+      });
+    }
+
+    render();
+    }
+  </script>
+</body>
+</html>

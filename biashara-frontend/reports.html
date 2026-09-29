@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reports & Alerts &middot; Biashara Inventory System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+
+  <div class="app-shell" id="appShell"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script>
+    const content = Biashara.mountShell({
+      active: "reports",
+      title: "Reports & Alerts",
+      subtitle: "Stock health, sales performance, and reorder alerts",
+    });
+
+    // mountShell() returns null and redirects to index.html if there's
+    // no valid session, so bail out of the rest of this page's script.
+    if (!content) {
+      // redirecting...
+    } else if (BiasharaDB.getCurrentUser().role !== "Owner") {
+      // Client-side guard — the real enforcement is the 'owner' middleware
+      // on the /api/reports/* routes; this just avoids a broken-looking
+      // page for an Attendant who lands here directly by URL.
+      window.location.href = "dashboard.html";
+    } else {
+
+    function stockPill(p) {
+      if (BiasharaDB.isCritical(p)) return `<span class="pill pill-danger"><span class="pill-dot"></span>Critical</span>`;
+      if (BiasharaDB.isLowStock(p)) return `<span class="pill pill-warning"><span class="pill-dot"></span>Low</span>`;
+      return `<span class="pill pill-success"><span class="pill-dot"></span>Healthy</span>`;
+    }
+
+    async function render() {
+      content.innerHTML = `<div class="text-center text-muted py-5">Loading...</div>`;
+
+      let products, lowStock, sales, bestSellers;
+      try {
+        [products, lowStock, sales, bestSellers] = await Promise.all([
+          BiasharaDB.getProducts(),
+          BiasharaDB.getLowStockProducts(),
+          BiasharaDB.getSales(),
+          BiasharaDB.getBestSellers(10),
+        ]);
+      } catch (err) {
+        content.innerHTML = `<div class="empty-state"><div class="icon">&#9888;</div>Could not load reports: ${Biashara.escapeHtml(err.message)}</div>`;
+        return;
+      }
+
+      const totalRevenue = sales.reduce((sum, s) => sum + s.total, 0);
+      const totalUnitsSold = sales.reduce((sum, s) => sum + s.items.reduce((a, i) => a + i.quantitySold, 0), 0);
+
+      content.innerHTML = `
+        <div class="row g-3 mb-3">
+          <div class="col-sm-4">
+            <div class="stat-tile">
+              <div class="label">Total Revenue Recorded</div>
+              <div class="value">${Biashara.formatKES(totalRevenue)}</div>
+            </div>
+          </div>
+          <div class="col-sm-4">
+            <div class="stat-tile">
+              <div class="label">Units Sold</div>
+              <div class="value">${totalUnitsSold}</div>
+            </div>
+          </div>
+          <div class="col-sm-4">
+            <div class="stat-tile alert">
+              <div class="label">Products Needing Reorder</div>
+              <div class="value">${lowStock.length}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-lg-6">
+            <div class="panel mb-3">
+              <div class="panel-header"><h2>Low-Stock &amp; Reorder Alerts</h2></div>
+              <div class="panel-body p-0">
+                ${lowStock.length === 0 ? `<div class="empty-state"><div class="icon">&#9989;</div>Nothing needs reordering right now.</div>` : `
+                <table class="table-biashara">
+                  <thead><tr><th>Product</th><th>In Stock</th><th>Reorder Level</th><th>Status</th></tr></thead>
+                  <tbody>
+                    ${lowStock.map(p => `
+                      <tr class="${BiasharaDB.isCritical(p) ? 'row-critical' : 'row-low'}">
+                        <td>${Biashara.escapeHtml(p.name)}</td>
+                        <td>${p.quantityInStock}</td>
+                        <td>${p.reorderLevel}</td>
+                        <td>${stockPill(p)}</td>
+                      </tr>`).join("")}
+                  </tbody>
+                </table>`}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="panel mb-3">
+              <div class="panel-header"><h2>Best-Selling Products</h2></div>
+              <div class="panel-body p-0">
+                <table class="table-biashara">
+                  <thead><tr><th>Product</th><th>Units Sold</th><th>Revenue</th></tr></thead>
+                  <tbody>
+                    ${bestSellers.map(b => `
+                      <tr>
+                        <td>${b.product ? Biashara.escapeHtml(b.product.name) : "—"}</td>
+                        <td>${b.qty}</td>
+                        <td>${b.product ? Biashara.formatKES(b.qty * b.product.unitPrice) : "—"}</td>
+                      </tr>`).join("")}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Full Stock Report</h2>
+            <button class="btn btn-sm btn-outline-biashara" onclick="window.print()">Print / Export</button>
+          </div>
+          <div class="panel-body p-0">
+            <table class="table-biashara">
+              <thead><tr><th>Product</th><th>Category</th><th>Unit Price</th><th>In Stock</th><th>Stock Value</th><th>Status</th></tr></thead>
+              <tbody>
+                ${products.map(p => `
+                  <tr>
+                    <td>${Biashara.escapeHtml(p.name)}</td>
+                    <td>${Biashara.escapeHtml(p.category)}</td>
+                    <td>${Biashara.formatKES(p.unitPrice)}</td>
+                    <td>${p.quantityInStock}</td>
+                    <td>${Biashara.formatKES(p.unitPrice * p.quantityInStock)}</td>
+                    <td>${stockPill(p)}</td>
+                  </tr>`).join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    render();
+    }
+  </script>
+</body>
+</html>

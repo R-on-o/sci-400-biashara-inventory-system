@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Products & Stock &middot; Biashara Inventory System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+
+  <div class="app-shell" id="appShell"></div>
+
+  <!-- Add / Edit Product Modal -->
+  <div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="productForm">
+          <div class="modal-header">
+            <h5 class="modal-title" id="productModalTitle">Add Product</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="productId">
+            <div class="mb-3">
+              <label class="form-label">Product name</label>
+              <input type="text" class="form-control" id="productName" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Category</label>
+              <select class="form-select" id="productCategory" required>
+                <option value="Groceries">Groceries</option>
+                <option value="Household">Household</option>
+                <option value="Beverages">Beverages</option>
+                <option value="Stationery">Stationery</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="row">
+              <div class="col-6 mb-3">
+                <label class="form-label">Unit price (KES)</label>
+                <input type="number" min="0" step="1" class="form-control" id="productPrice" required>
+              </div>
+              <div class="col-6 mb-3">
+                <label class="form-label">Reorder level</label>
+                <input type="number" min="0" step="1" class="form-control" id="productReorder" required>
+              </div>
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Current quantity in stock</label>
+              <input type="number" min="0" step="1" class="form-control" id="productQty" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-biashara" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-biashara">Save product</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script>
+    const content = Biashara.mountShell({
+      active: "products",
+      title: "Products & Stock",
+      subtitle: "Manage what you sell and how much you have on hand",
+    });
+
+    // mountShell() returns null and redirects to index.html if there's
+    // no valid session, so bail out of the rest of this page's script.
+    if (!content) {
+      // redirecting...
+    } else {
+
+    let searchTerm = "";
+    let categoryFilter = "";
+    let allProducts = [];
+    const isOwner = BiasharaDB.getCurrentUser().role === "Owner";
+
+    function stockPill(p) {
+      if (BiasharaDB.isCritical(p)) return `<span class="pill pill-danger"><span class="pill-dot"></span>Critical</span>`;
+      if (BiasharaDB.isLowStock(p)) return `<span class="pill pill-warning"><span class="pill-dot"></span>Low</span>`;
+      return `<span class="pill pill-success"><span class="pill-dot"></span>Healthy</span>`;
+    }
+
+    async function loadProducts() {
+      try {
+        allProducts = await BiasharaDB.getProducts();
+      } catch (err) {
+        content.innerHTML = `<div class="empty-state"><div class="icon">&#9888;</div>Could not load products: ${Biashara.escapeHtml(err.message)}</div>`;
+        throw err;
+      }
+    }
+
+    function render() {
+      const all = allProducts;
+      const categories = [...new Set(all.map(p => p.category))];
+      const filtered = all.filter(p => {
+        const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCategory = !categoryFilter || p.category === categoryFilter;
+        return matchesSearch && matchesCategory;
+      });
+
+      content.innerHTML = `
+        <div class="panel">
+          <div class="panel-header">
+            <h2>All Products (${filtered.length})</h2>
+            ${isOwner ? `<button class="btn btn-amber btn-sm" id="addProductBtn">+ Add Product</button>` : ""}
+          </div>
+          <div class="panel-body">
+            <div class="row g-2 mb-3">
+              <div class="col-sm-6">
+                <input type="search" class="form-control" id="searchInput" placeholder="Search products by name..." value="${Biashara.escapeHtml(searchTerm)}">
+              </div>
+              <div class="col-sm-4">
+                <select class="form-select" id="categorySelect">
+                  <option value="">All categories</option>
+                  ${categories.map(c => `<option value="${c}" ${c === categoryFilter ? "selected" : ""}>${c}</option>`).join("")}
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="panel-body p-0">
+            ${filtered.length === 0 ? `
+              <div class="empty-state">
+                <div class="icon">&#128230;</div>
+                No products match your search.
+              </div>` : `
+              <table class="table-biashara">
+                <thead>
+                  <tr>
+                    <th>Product</th><th>Category</th><th>Unit Price</th>
+                    <th>In Stock</th><th>Reorder Level</th><th>Status</th>${isOwner ? "<th></th>" : ""}
+                  </tr>
+                </thead>
+                <tbody>
+                  ${filtered.map(p => `
+                    <tr class="${BiasharaDB.isCritical(p) ? 'row-critical' : (BiasharaDB.isLowStock(p) ? 'row-low' : '')}">
+                      <td>${Biashara.escapeHtml(p.name)}</td>
+                      <td>${Biashara.escapeHtml(p.category)}</td>
+                      <td>${Biashara.formatKES(p.unitPrice)}</td>
+                      <td>${p.quantityInStock}</td>
+                      <td>${p.reorderLevel}</td>
+                      <td>${stockPill(p)}</td>
+                      ${isOwner ? `
+                      <td class="text-end">
+                        <button class="btn btn-sm btn-outline-biashara edit-btn" data-id="${p.id}">Edit</button>
+                        <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${p.id}">Delete</button>
+                      </td>` : ""}
+                    </tr>`).join("")}
+                </tbody>
+              </table>`}
+          </div>
+        </div>
+      `;
+
+      document.getElementById("searchInput").addEventListener("input", (e) => {
+        searchTerm = e.target.value;
+        render();
+      });
+      document.getElementById("categorySelect").addEventListener("change", (e) => {
+        categoryFilter = e.target.value;
+        render();
+      });
+      if (!isOwner) return; // Attendants can browse/search only — no add/edit/delete controls exist above to wire up.
+      document.getElementById("addProductBtn").addEventListener("click", () => openModal());
+      document.querySelectorAll(".edit-btn").forEach(btn =>
+        btn.addEventListener("click", () => openModal(allProducts.find(p => p.id === Number(btn.dataset.id)))));
+      document.querySelectorAll(".delete-btn").forEach(btn =>
+        btn.addEventListener("click", async () => {
+          const p = allProducts.find(p => p.id === Number(btn.dataset.id));
+          if (!p) return;
+          if (confirm(`Delete "${p.name}"? This cannot be undone.`)) {
+            try {
+              await BiasharaDB.deleteProduct(p.id);
+              Biashara.toast(`${p.name} deleted.`, "danger");
+              await loadProducts();
+              render();
+            } catch (err) {
+              Biashara.toast(err.message, "danger");
+            }
+          }
+        }));
+    }
+
+    const productModalEl = document.getElementById("productModal");
+    const productModal = new bootstrap.Modal(productModalEl);
+
+    function openModal(product) {
+      document.getElementById("productModalTitle").textContent = product ? "Edit Product" : "Add Product";
+      document.getElementById("productId").value = product ? product.id : "";
+      document.getElementById("productName").value = product ? product.name : "";
+      document.getElementById("productCategory").value = product ? product.category : "Groceries";
+      document.getElementById("productPrice").value = product ? product.unitPrice : "";
+      document.getElementById("productReorder").value = product ? product.reorderLevel : "";
+      document.getElementById("productQty").value = product ? product.quantityInStock : 0;
+      productModal.show();
+    }
+
+    document.getElementById("productForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("productId").value;
+      const payload = {
+        name: document.getElementById("productName").value.trim(),
+        category: document.getElementById("productCategory").value,
+        unitPrice: document.getElementById("productPrice").value,
+        reorderLevel: document.getElementById("productReorder").value,
+        quantityInStock: document.getElementById("productQty").value,
+      };
+      try {
+        if (id) {
+          await BiasharaDB.updateProduct(id, payload);
+          Biashara.toast("Product updated.");
+        } else {
+          await BiasharaDB.addProduct(payload);
+          Biashara.toast("Product added.");
+        }
+        productModal.hide();
+        await loadProducts();
+        render();
+      } catch (err) {
+        Biashara.toast(err.message, "danger");
+      }
+    });
+
+    (async function () {
+      content.innerHTML = `<div class="text-center text-muted py-5">Loading...</div>`;
+      try {
+        await loadProducts();
+      } catch (err) {
+        return;
+      }
+      render();
+    })();
+    }
+  </script>
+</body>
+</html>

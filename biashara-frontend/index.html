@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign in &middot; Biashara Inventory System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-mark">B</div>
+      <h1>Welcome back</h1>
+      <div class="sub">Sign in to manage your stock and sales.</div>
+
+      <form id="loginForm" novalidate>
+        <div class="mb-3">
+          <label for="username" class="form-label">Username</label>
+          <input type="text" class="form-control" id="username" placeholder="e.g. nick.owner" required autofocus>
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label">Password</label>
+          <input type="password" class="form-control" id="password" placeholder="Enter your password" required>
+        </div>
+        <div id="loginError" class="text-danger small mb-3" style="display:none;">
+          Please enter both your username and password.
+        </div>
+        <button type="submit" class="btn btn-biashara w-100 py-2">Sign in</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/data.js"></script>
+  <script>
+    // If there's already a valid session, skip straight to the dashboard.
+    if (window.BiasharaDB.isLoggedIn()) {
+      window.location.href = "dashboard.html";
+    }
+
+    document.getElementById("loginForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const errorEl = document.getElementById("loginError");
+      const submitBtn = e.target.querySelector("button[type=submit]");
+
+      if (!username || !password) {
+        errorEl.textContent = "Please enter both your username and password.";
+        errorEl.style.display = "block";
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Signing in...";
+
+      const result = await window.BiasharaDB.login(username, password);
+
+      if (!result.success) {
+        errorEl.textContent = result.message;
+        errorEl.style.display = "block";
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Sign in";
+        return;
+      }
+
+      errorEl.style.display = "none";
+      window.location.href = "dashboard.html";
+    });
+  </script>
+</body>
+</html>
